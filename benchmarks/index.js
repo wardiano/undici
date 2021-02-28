@@ -61,6 +61,10 @@ const client = new Client(httpOptions.url, {
   pipelining,
   ...dest,
   keepAliveTimeout: 3600e3
+}).on('connect', () => {
+  console.log('client connect')
+}).on('disconnect', (...args) => {
+  console.log('client disconnect', ...args)
 })
 client[kConnect]()
 
@@ -69,6 +73,10 @@ const pool = new Pool(httpOptions.url, {
   connections,
   ...dest,
   keepAliveTimeout: 3600e3
+}).on('connect', () => {
+  console.log('pool connect')
+}).on('disconnect', (...args) => {
+  console.log('pool disconnect', ...args)
 })
 pool[kConnect]()
 

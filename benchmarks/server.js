@@ -7,8 +7,9 @@ const path = require('path')
 const port = process.env.PORT || path.join(os.tmpdir(), 'undici.sock')
 const timeout = parseInt(process.env.TIMEOUT, 10) || 1
 
-createServer((req, res) => {
+const server = createServer((req, res) => {
   setTimeout(function () {
     res.end('hello world')
   }, timeout)
 }).listen(port)
+server.keepAliveTimeout = 3600e3
