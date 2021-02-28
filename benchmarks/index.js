@@ -3,6 +3,7 @@ const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const { Client, Pool } = require('..')
+const { kConnect } = require('../lib/core/symbols')
 const os = require('os')
 const path = require('path')
 
@@ -58,14 +59,18 @@ const undiciOptions = {
 
 const client = new Client(httpOptions.url, {
   pipelining,
-  ...dest
+  ...dest,
+  keepAliveTimeout: 3600e3
 })
+client[kConnect]()
 
 const pool = new Pool(httpOptions.url, {
   pipelining,
   connections,
-  ...dest
+  ...dest,
+  keepAliveTimeout: 3600e3
 })
+pool[kConnect]()
 
 const suite = new Benchmark.Suite()
 
