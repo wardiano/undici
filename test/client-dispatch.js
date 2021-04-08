@@ -5,9 +5,31 @@ const { Client, Pool, errors } = require('..')
 const http = require('http')
 
 test('dispatch invalid opts', (t) => {
-  t.plan(4)
+  t.plan(8)
 
   const client = new Client('http://localhost:5000')
+
+  try {
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 1
+    }, null)
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'handler')
+  }
+
+  try {
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 1
+    }, 'asd')
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'handler')
+  }
 
   client.dispatch({
     path: '/',
@@ -140,8 +162,8 @@ test('trailers dispatch get', (t) => {
         t.equal(statusCode, 200)
         t.equal(Array.isArray(headers), true)
         {
-          const contentTypeIdx = headers.findIndex(x => x === 'Content-Type')
-          t.equal(headers[contentTypeIdx + 1], 'text/plain')
+          const contentTypeIdx = headers.findIndex(x => x.toString() === 'Content-Type')
+          t.equal(headers[contentTypeIdx + 1].toString(), 'text/plain')
         }
       },
       onData (buf) {
@@ -150,8 +172,8 @@ test('trailers dispatch get', (t) => {
       onComplete (trailers) {
         t.equal(Array.isArray(trailers), true)
         {
-          const contentMD5Idx = trailers.findIndex(x => x === 'Content-MD5')
-          t.equal(trailers[contentMD5Idx + 1], 'test')
+          const contentMD5Idx = trailers.findIndex(x => x.toString() === 'Content-MD5')
+          t.equal(trailers[contentMD5Idx + 1].toString(), 'test')
         }
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       },

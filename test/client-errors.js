@@ -418,6 +418,30 @@ test('invalid options throws', (t) => {
     t.equal(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: Infinity }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
   t.end()
 })
 
@@ -968,5 +992,31 @@ test('socket errors', t => {
     // TODO: Why UND_ERR_SOCKET?
     t.ok(err.code === 'ECONNREFUSED' || err.code === 'UND_ERR_SOCKET', err.code)
     t.end()
+  })
+})
+
+test('headers overflow', t => {
+  t.plan(2)
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeHead(200, {
+      'x-test-1': '1',
+      'x-test-2': '2'
+    })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxHeaderSize: 10
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err)
+      t.equal(err.code, 'UND_ERR_HEADERS_OVERFLOW')
+      t.end()
+    })
   })
 })
